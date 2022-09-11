@@ -1,0 +1,56 @@
+version: "3.9"
+
+services:
+  app-backend:
+    container_name: app-backend
+    depends_on:
+      - db
+      - uploads-server
+    build:
+      context: ./app-backend
+      dockerfile: Dockerfile.prod
+    volumes:
+      - ./app-backend:/app
+    ports:
+      - ${SERVER_PORT}:${SERVER_PORT}
+      - 9229:9229
+    command: npm run start:prod
+    env_file:
+      - .env
+    networks:
+      - database
+  uploads-server:
+    container_name: uploads-server
+    build:
+      context: ./app-uploads
+      dockerfile: Dockerfile.prod
+    volumes:
+      - ./app-uploads:/app
+    ports:
+      - ${UPLOADS_PORT}:${UPLOADS_PORT}
+    command: yarn start:prod
+    env_file:
+      - .env
+    networks:
+      - uploads
+  db:
+    restart: always
+    container_name: db
+    image: postgres
+    environment:
+      - POSTGRES_HOST=172.17.0.1
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=chat
+    volumes:
+      - dbdata:/var/lib/postgresql/data
+    ports:
+      - 5432:5432
+    networks:
+      - database
+
+networks:
+  database:
+  uploads:
+volumes:
+  dbdata:
